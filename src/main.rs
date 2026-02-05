@@ -11,6 +11,8 @@ const GRID_WIDTH_PX: f32 = GRID_WIDTH as f32 * CELL_SIZE_PX;
 const GRID_HEIGHT_PX: f32 = GRID_HEIGHT as f32 * CELL_SIZE_PX;
 const UI_WIDTH_PX: f32 = 200.0;
 const TICK_DURATION: f32 = 0.2;
+const VIEWPORT_WIDTH: usize = 21 * 6;
+const VIEWPORT_HEIGHT: usize = 9 * 6;
 
 type Coord = (i32, i32);
 type Grid = HashSet<Coord>;
@@ -33,6 +35,12 @@ async fn main() {
     // UI stuff
     let buttons = vec!["Start/Stop (SPACE)", "Clear (C)", "Toggle Grid (G)"];
 
+    // camera
+    let mut camera_x = 0.0f32;
+    let mut camera_y = 0.0f32;
+    let mut is_panning = false;
+    let mut last_mouse_pos = (0.0f32, 0.0f32);
+
     // Simulation
     let mut is_running = false;
     let mut show_grid = false;
@@ -45,19 +53,30 @@ async fn main() {
         // input stuff
         let (mx, my) = mouse_position();
         if (mx >= 0.0 && mx < GRID_WIDTH_PX) && (my >= 0.0 && my < GRID_HEIGHT_PX) {
-            if is_mouse_button_pressed(MouseButton::Left) {
-                let coord = normalize_mouse(mx, my);
-                if !cells.contains(&coord) {
-                    cells.insert(coord);
-                    println!("inserted");
+            if (mx >= 0.0 && mx < GRID_WIDTH_PX) && (my >= 0.0 && my < GRID_HEIGHT_PX) {
+                if is_mouse_button_pressed(MouseButton::Left) && !is_panning {
+                    let coord = screen_to_world(mx, my, camera_x, camera_y);
+                    if !cells.contains(&coord) {
+                        cells.insert(coord);
+                    }
+                }
+                if is_mouse_button_pressed(MouseButton::Right) && !is_panning {
+                    let coord = screen_to_world(mx, my, camera_x, camera_y);
+                    cells.remove(&coord);
                 }
             }
 
-            if is_mouse_button_pressed(MouseButton::Right) {
-                let coord = normalize_mouse(mx, my);
-                if cells.contains(&coord) {
-                    cells.remove(&coord);
-                }
+            if is_mouse_button_pressed(MouseButton::Middle) {
+                is_panning = true;
+                last_mouse_pos = (mx, my);
+            }
+            if is_mouse_button_released(MouseButton::Middle) {
+                is_panning = false;
+            }
+            if is_panning {
+                camera_x += mx - last_mouse_pos.0;
+                camera_y += my - last_mouse_pos.1;
+                last_mouse_pos = (mx, my);
             }
         }
 
@@ -73,14 +92,21 @@ async fn main() {
             cells = HashSet::new();
         }
 
+        // Calculate visible cell range
+        let start_x = (-camera_x / CELL_SIZE_PX).floor() as i32;
+        let start_y = (-camera_y / CELL_SIZE_PX).floor() as i32;
+        let end_x = start_x + VIEWPORT_WIDTH as i32 + 1;
+        let end_y = start_y + VIEWPORT_HEIGHT as i32 + 1;
+
         // render
         clear_background(WHITE);
-        for y in 0..GRID_HEIGHT {
-            for x in 0..GRID_WIDTH {
+        for y in start_y..end_y {
+            for x in start_x..end_x {
+                let screen_pos = world_to_screen(x, y, camera_x, camera_y);
                 if show_grid {
                     draw_rectangle(
-                        x as f32 * CELL_SIZE_PX,
-                        y as f32 * CELL_SIZE_PX,
+                        screen_pos.0,
+                        screen_pos.1,
                         CELL_SIZE_PX,
                         CELL_SIZE_PX,
                         if (x + y) % 2 == 0 {
@@ -90,10 +116,10 @@ async fn main() {
                         },
                     );
                 }
-                if cells.contains(&(x as i32, y as i32)) {
+                if cells.contains(&(x, y)) {
                     draw_rectangle(
-                        x as f32 * CELL_SIZE_PX,
-                        y as f32 * CELL_SIZE_PX,
+                        screen_pos.0,
+                        screen_pos.1,
                         CELL_SIZE_PX,
                         CELL_SIZE_PX,
                         BLACK,
@@ -102,8 +128,7 @@ async fn main() {
             }
         }
 
-        // UI
-
+        // UI section
         draw_rectangle(
             GRID_WIDTH_PX,
             0.0,
@@ -147,9 +172,15 @@ async fn main() {
     }
 }
 
-fn normalize_mouse(mx: f32, my: f32) -> (i32, i32) {
+fn screen_to_world(screen_x: f32, screen_y: f32, cam_x: f32, cam_y: f32) -> Coord {
+    let world_x = (screen_x - cam_x) / CELL_SIZE_PX;
+    let world_y = (screen_y - cam_y) / CELL_SIZE_PX;
+    (world_x.floor() as i32, world_y.floor() as i32)
+}
+
+fn world_to_screen(world_x: i32, world_y: i32, cam_x: f32, cam_y: f32) -> (f32, f32) {
     (
-        ((mx - (mx % CELL_SIZE_PX)) / CELL_SIZE_PX) as i32,
-        ((my - (my % CELL_SIZE_PX)) / CELL_SIZE_PX) as i32,
+        world_x as f32 * CELL_SIZE_PX + cam_x,
+        world_y as f32 * CELL_SIZE_PX + cam_y,
     )
 }
