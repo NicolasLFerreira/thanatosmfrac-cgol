@@ -28,19 +28,8 @@ fn window_conf() -> Conf {
 async fn main() {
     let mut cells: Grid = empty_grid();
 
-    // ui stuff
+    // UI stuff
     let buttons = vec!["Start/Stop (SPACE)", "Clear (C)", "Toggle Grid (G)"];
-
-    // // Seeding
-    // let glider: Vec<Vec<bool>> = vec![
-    //     vec![false, false, true],
-    //     vec![true, false, true],
-    //     vec![false, true, true],
-    // ];
-    // let shape = shape_translate(glider.clone(), 16, 24);
-    // seed(&mut cells, shape);
-    // let shape = shape_translate(glider.clone(), 20, 28);
-    // seed(&mut cells, shape);
 
     // Simulation
     let mut is_running = false;
@@ -106,7 +95,8 @@ async fn main() {
             }
         }
 
-        // Draw UI panel
+        // UI
+
         draw_rectangle(
             GRID_WIDTH_PX,
             0.0,
@@ -115,7 +105,6 @@ async fn main() {
             Color::new(0.8, 0.8, 0.8, 1.0),
         );
 
-        // Example buttons
         let button_height = 50.0;
         let button_margin = 10.0;
 
@@ -128,7 +117,6 @@ async fn main() {
             draw_rectangle(x, y, w, h, Color::new(0.6, 0.6, 0.6, 1.0));
             draw_text(label, x + 10.0, y + 30.0, 20.0, BLACK);
 
-            // Detect click
             if is_mouse_button_pressed(MouseButton::Left) {
                 let (mx, my) = mouse_position();
                 if mx >= x && mx <= x + w && my >= y && my <= y + h {
