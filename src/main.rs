@@ -1,5 +1,7 @@
+mod canonical;
 mod conway;
 
+use crate::canonical::canonical_entry_point;
 use conway::*;
 use macroquad::prelude::*;
 use std::collections::HashSet;
@@ -44,6 +46,7 @@ async fn main() {
     // Simulation
     let mut is_running = false;
     let mut show_grid = false;
+    let mut step_once = false;
     let mut tick_timer = 0.0f32;
     loop {
         // time step
@@ -90,6 +93,10 @@ async fn main() {
 
         if is_key_pressed(KeyCode::C) {
             cells = HashSet::new();
+        }
+
+        if is_key_pressed(KeyCode::N) {
+            step_once = true;
         }
 
         // Calculate visible cell range
@@ -163,9 +170,11 @@ async fn main() {
         }
 
         // actual sim run
-        if tick_timer >= TICK_DURATION && is_running {
+        if (tick_timer >= TICK_DURATION && is_running) || (step_once && !is_running) {
             simulation(&mut cells);
+            canonical_entry_point(&cells);
             tick_timer = 0.0;
+            step_once = false;
         }
 
         next_frame().await;
