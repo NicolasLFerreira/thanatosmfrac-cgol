@@ -1,6 +1,8 @@
 mod conway;
+
 use conway::*;
 use macroquad::prelude::*;
+use std::collections::HashSet;
 
 const GRID_WIDTH: usize = 21 * 6;
 const GRID_HEIGHT: usize = 9 * 6;
@@ -10,8 +12,8 @@ const GRID_HEIGHT_PX: f32 = GRID_HEIGHT as f32 * CELL_SIZE_PX;
 const UI_WIDTH_PX: f32 = 200.0;
 const TICK_DURATION: f32 = 0.2;
 
-type Grid = Vec<bool>;
-type Coord = (usize, usize);
+type Coord = (i32, i32);
+type Grid = HashSet<Coord>;
 
 fn window_conf() -> Conf {
     Conf {
@@ -26,7 +28,7 @@ fn window_conf() -> Conf {
 
 #[macroquad::main(window_conf)]
 async fn main() {
-    let mut cells: Grid = empty_grid();
+    let mut cells: Grid = HashSet::new();
 
     // UI stuff
     let buttons = vec!["Start/Stop (SPACE)", "Clear (C)", "Toggle Grid (G)"];
@@ -44,13 +46,18 @@ async fn main() {
         let (mx, my) = mouse_position();
         if (mx >= 0.0 && mx < GRID_WIDTH_PX) && (my >= 0.0 && my < GRID_HEIGHT_PX) {
             if is_mouse_button_pressed(MouseButton::Left) {
-                let (nmy, nmx) = normalize_mouse(my, mx);
-                cells[idx(nmy, nmx)] = true;
+                let coord = normalize_mouse(mx, my);
+                if !cells.contains(&coord) {
+                    cells.insert(coord);
+                    println!("inserted");
+                }
             }
 
             if is_mouse_button_pressed(MouseButton::Right) {
-                let (nmy, nmx) = normalize_mouse(my, mx);
-                cells[idx(nmy, nmx)] = false;
+                let coord = normalize_mouse(mx, my);
+                if cells.contains(&coord) {
+                    cells.remove(&coord);
+                }
             }
         }
 
@@ -63,7 +70,7 @@ async fn main() {
         }
 
         if is_key_pressed(KeyCode::C) {
-            cells = empty_grid();
+            cells = HashSet::new();
         }
 
         // render
@@ -83,7 +90,7 @@ async fn main() {
                         },
                     );
                 }
-                if cells[idx(y, x)] {
+                if cells.contains(&(x as i32, y as i32)) {
                     draw_rectangle(
                         x as f32 * CELL_SIZE_PX,
                         y as f32 * CELL_SIZE_PX,
@@ -122,7 +129,7 @@ async fn main() {
                 if mx >= x && mx <= x + w && my >= y && my <= y + h {
                     match i {
                         0 => is_running = !is_running,
-                        1 => cells = empty_grid(),
+                        1 => cells = HashSet::new(),
                         2 => show_grid = !show_grid,
                         _ => {}
                     }
@@ -140,13 +147,9 @@ async fn main() {
     }
 }
 
-fn normalize_mouse(my: f32, mx: f32) -> (usize, usize) {
+fn normalize_mouse(mx: f32, my: f32) -> (i32, i32) {
     (
-        ((my - (my % CELL_SIZE_PX)) / CELL_SIZE_PX) as usize,
-        ((mx - (mx % CELL_SIZE_PX)) / CELL_SIZE_PX) as usize,
+        ((mx - (mx % CELL_SIZE_PX)) / CELL_SIZE_PX) as i32,
+        ((my - (my % CELL_SIZE_PX)) / CELL_SIZE_PX) as i32,
     )
-}
-
-fn empty_grid() -> Grid {
-    vec![false; GRID_WIDTH * GRID_HEIGHT]
 }
