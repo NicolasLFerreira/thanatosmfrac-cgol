@@ -6,7 +6,7 @@ pub fn compute_canonical(cells: &Grid) -> Vec<(u32, u32)> {
     // Converts to vec for easier handling
     let cells: Vec<_> = cells.iter().collect();
 
-    println!("{:?}", cells);
+    println!("Source configuration: {:?}", cells);
 
     // FIRST STEP: FINDING BOUNDING BOX
     // VERY important, needs to be able to find the minimum rectangle that encompasses the alive cells.
@@ -90,7 +90,7 @@ pub fn compute_canonical(cells: &Grid) -> Vec<(u32, u32)> {
 
     let canonical = ordered.iter().min().unwrap();
 
-    println!("{:?}", canonical);
+    println!("Canonical configuration: {:?}", canonical);
 
     canonical.to_vec()
 }

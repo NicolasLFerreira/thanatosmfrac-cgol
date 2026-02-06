@@ -1,9 +1,8 @@
 mod canonical;
 mod conway;
-mod thanatoscore;
+mod thanatos_core;
 
-use crate::canonical::compute_canonical;
-use crate::thanatoscore::thanatos_core;
+use crate::thanatos_core::thanatos_core;
 use conway::*;
 use macroquad::prelude::*;
 use std::collections::HashSet;
