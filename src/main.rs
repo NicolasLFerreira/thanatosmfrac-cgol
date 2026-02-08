@@ -7,6 +7,8 @@ use tmfroc::conway;
 use tmfroc::thanatos;
 use tmfroc::types::cell_configuration::CellConfiguration;
 use tmfroc::types::cell_coord::CellCoord;
+use tmfroc::types::simulation_feed::SimulationFeed;
+use tmfroc::types::simulation_payload::SimulationPayload;
 use tmfroc::ui::app::App;
 
 fn main() {
@@ -19,7 +21,7 @@ fn main() {
     ];
 
     let seed_cells = CellConfiguration::random_configuration(42, 20, 20, 0.3);
-    let shared = Arc::new(AtomicCell::new(Arc::new(CellConfiguration::new())));
+    let shared = Arc::new(AtomicCell::new(Arc::new(SimulationPayload::default())));
 
     // Simulation thread
     {
@@ -30,7 +32,7 @@ fn main() {
     run_ui(shared);
 }
 
-fn run_logic(seed_cells: Vec<CellCoord>, shared: Arc<AtomicCell<Arc<CellConfiguration>>>) {
+fn run_logic(seed_cells: Vec<CellCoord>, shared: SimulationFeed) {
     // Own the mutable working copy of the simulation state
     let mut cconf = CellConfiguration::with_seed_configuration(seed_cells);
 
@@ -51,12 +53,12 @@ fn run_logic(seed_cells: Vec<CellCoord>, shared: Arc<AtomicCell<Arc<CellConfigur
 
         // Publish a snapshot to UI (or other observers)
         // Only the Arc is cloned, not the entire HashSet
-        shared.store(Arc::new(cconf.clone()));
+        shared.store(Arc::new(SimulationPayload::new(Some(cconf.clone()))));
         thread::sleep(Duration::from_millis(500));
     }
 }
 
-fn run_ui(shared: Arc<AtomicCell<Arc<CellConfiguration>>>) {
+fn run_ui(shared: SimulationFeed) {
     let native_options = eframe::NativeOptions {
         centered: true,
         renderer: Renderer::Wgpu,

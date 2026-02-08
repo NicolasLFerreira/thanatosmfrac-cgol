@@ -1,30 +1,34 @@
 use crate::types::cell_configuration::CellConfiguration;
-use crossbeam::atomic::AtomicCell;
-use std::sync::Arc;
+use crate::types::simulation_feed::SimulationFeed;
+use std::time::Duration;
 
 const CELL_SIZE_PX: f32 = 16.0;
 
 pub struct App {
     grid_pan: egui::Vec2,
     show_grid: bool,
-    shared: Arc<AtomicCell<Arc<CellConfiguration>>>,
+    sim_feed: SimulationFeed,
+    cconf: CellConfiguration,
 }
 
 impl App {
-    pub fn new(
-        cc: &eframe::CreationContext<'_>,
-        shared: Arc<AtomicCell<Arc<CellConfiguration>>>,
-    ) -> Self {
+    pub fn new(cc: &eframe::CreationContext<'_>, feed: SimulationFeed) -> Self {
         Self {
             grid_pan: egui::Vec2::default(),
             show_grid: false,
-            shared,
+            sim_feed: feed,
+            cconf: CellConfiguration::default(),
         }
     }
 }
 
 impl eframe::App for App {
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+        let payload = self.sim_feed.take();
+        if let Some(cconf) = &payload.cconf {
+            self.cconf = cconf.clone();
+        }
+
         egui::TopBottomPanel::top("top").show(ctx, |ui| {
             egui::containers::menu::MenuBar::new().ui(ui, |ui| {
                 ui.menu_button("File", |ui| {
@@ -123,7 +127,7 @@ impl eframe::App for App {
                 painter.rect_filled(viewport, 0.0, egui::Color32::WHITE);
             }
 
-            for cell in self.shared.take().iter() {
+            for cell in self.cconf.iter() {
                 paint_cell(
                     &painter,
                     center,
@@ -135,7 +139,7 @@ impl eframe::App for App {
             }
         });
 
-        ctx.request_repaint()
+        ctx.request_repaint_after(Duration::from_millis(16))
     }
 }
 
