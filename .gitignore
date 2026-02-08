@@ -3,5 +3,5 @@
 .idea/
 
 # Profiling output
-profile.svg
-profile.csv
+*.svg
+*.csv
