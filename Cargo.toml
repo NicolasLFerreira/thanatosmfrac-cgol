@@ -4,17 +4,16 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-egui = "0.33.3"
-wyhash = "0.6.0"
-eframe = { version = "0.33.3", features = ["wgpu"] }
 crossbeam = "0.8.4"
-rand = "0.10.0-rc.9"
-pprof2 = { version = "0.13.1", features = ["flamegraph", "prost-codec"] }
-hashbrown = "0.16.1"
+eframe = { version = "0.33.3", features = ["wgpu"] }
+egui = "0.33.3"
 fxhash = "0.2.1"
+hashbrown = "0.16.1"
+rand = "0.10.0-rc.9"
+wyhash = "0.6.0"
 
-[target.x86_64-pc-windows-gnu]
-rustflags = ["-C", "target-feature=+crt-static"]
+[target.'cfg(unix)'.dependencies]
+pprof = { version = "0.15.0", features = ["flamegraph"] }
 
 [dev-dependencies]
 criterion = "0.8.2"
@@ -22,3 +21,6 @@ criterion = "0.8.2"
 [[bench]]
 name = "simulation"
 harness = false
+
+[target.x86_64-pc-windows-gnu]
+rustflags = ["-C", "target-feature=+crt-static"]
