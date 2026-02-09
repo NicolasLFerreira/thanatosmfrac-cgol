@@ -1,5 +1,6 @@
 use crate::mfrac::canonical::compute_canonical;
 use crate::types::CellConfiguration;
+use crate::utilities::bit_packing::pack_u64_u128;
 use wyhash::wyhash;
 
 pub fn process_mfrac(configuration: &CellConfiguration) {
@@ -24,5 +25,5 @@ pub fn compute_hash(canonical: &Vec<(u32, u32)>) -> u128 {
     let h2 = wyhash(&bytes, SEED_2);
 
     // final 128-bit hash
-    ((h1 as u128) << 64) | (h2 as u128)
+    pack_u64_u128(h1, h2)
 }
