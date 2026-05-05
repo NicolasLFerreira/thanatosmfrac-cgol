@@ -16,6 +16,7 @@ pub fn startup(parameters: StartupParameters) {
     // Simulation state feed setup
     let feed = Arc::new(AtomicCell::new(Arc::new(SimulationPayload::default())));
 
+    // sim start
     start_simulation(SimulationParameters {
         feed: Arc::clone(&feed),
         max_run_count: parameters.max_runs,
